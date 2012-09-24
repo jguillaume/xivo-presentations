@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Provd</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script src="remark-0.4.2.min.js" type="text/javascript"></script>
+    <style type="text/css">
+        @import url(http://fonts.googleapis.com/css?family=Droid+Serif);
+        @import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+
+        body { font-family: 'Droid Serif'; }
+        h1, h2, h3 {
+            font-family: 'Yanone Kaffeesatz';
+            font-weight: 400;
+            margin-bottom: 0;
+        }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.6em; }
+        h3 { font-size: 1.2em; }
+        .footnote {
+            position: absolute;
+            bottom: 3em;
+        }
+        .red { color: #fa0000; }
+        .large { font-size: 2em; }
+        a, a > code {
+            color: rgb(249, 38, 114);
+            text-decoration: none;
+        }
+        code {
+            -moz-border-radius: 5px;
+            -web-border-radius: 5px;
+            background: #e7e8e2;
+            border-radius: 5px;
+        }
+        #slideshow .slide .content code {
+            font-size: 0.8em;
+        }
+        #slideshow .slide .content pre code {
+            font-size: 0.9em;
+            padding: 15px;
+        }
+        .inverse {
+            background: #272822;
+            color: #777872;
+            text-shadow: 0 0 20px #333;
+        }
+        .inverse h1, .inverse h2 {
+            color: #f3f3f3;
+            line-height: 0.8em;
+        }
+
+        /* Slide-specific styling */
+        #slide-how .slides {
+            font-size: 0.9em;
+            position: absolute;
+            top:  151px;
+            right: 140px;
+        }
+        #slide-how .slides h3 {
+            margin-top: 0.2em;
+        }
+        #slide-how .slides .first, #slide-how .slides .second {
+            padding: 1px 20px;
+            height: 90px;
+            width: 120px;
+            -moz-box-shadow: 0 0 10px #777;
+            -webkit-box-shadow: 0 0 10px #777;
+            box-shadow: 0 0 10px #777;
+        }
+        #slide-how .slides .first {
+            background: #fff;
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            z-index: 1;
+        }
+        #slide-how .slides .second {
+            position: relative;
+            background: #fff;
+            z-index: 0;
+        }
+    </style>
+  </head>
+  <body>
+
+<textarea id="source">
+class: center, middle, inverse
+
+# Provd #
+Gregory Eric Sanderson Turcot Temlett MacDonnell Forbes
+
+21 Sept 2012
+
+---
+name: default
+layout: true
+
+# {{section}} #
+
+---
+section: Analyse du telephone
+
+ * Langue
+ * Timezone
+ * UTF-8
+ * Reboot du telephone (SIP notify ?)
+ * Appel simple
+ * Transfert direct
+ * Transfert indirect
+ * Firmware upgrade
+ * Lignes multiples
+ * DTMF (RTP ? SIP ?)
+ * Lumière pour les voicemail
+ * Bouton pour les voicemail
+ * Appel en attente
+ * Touches de fonction
+ * Interception d'appel (BLF)
+ * NTP
+
+---
+section: Configuration DHCP
+
+Option 66 de DHCP
+
+xivo-skaro/provisioning/dhcpd-update/dhcp/dhcpd_update
+
+    group {
+        option tftp-server-name = concat(config-option VOIP.http-server-uri, "/Digium");
+    
+        class "DigiumD40" {
+            match if substring(option vendor-class-identifier, 0, 10) = "digium_D40";
+            log(concat("[", binary-to-ascii(16, 8, ":", hardware), "] ", "BOOT Digium D40"));
+        }
+    
+        class "DigiumD50" {
+            match if substring(option vendor-class-identifier, 0, 10) = "digium_D50";
+            log(concat("[", binary-to-ascii(16, 8, ":", hardware), "] ", "BOOT Digium D50"));
+        }
+    
+        class "DigiumD70" {
+            match if substring(option vendor-class-identifier, 0, 10) = "digium_D70";
+            log(concat("[", binary-to-ascii(16, 8, ":", hardware), "] ", "BOOT Digium D70"));
+        }
+    
+    }
+
+---
+section: Configuration DHCP
+
+xivo-skaro/provisioning/dhcpd-update/dhcp/dhcpd_subnet.conf.middle
+
+        # Digium
+        allow members of "DigiumD40";
+        allow members of "DigiumD50";
+        allow members of "DigiumD70";
+
+---
+section: Configuration DHCP
+
+Logs
+
+    dhcpd: [1:0:f:d3:5:48:48] [VENDOR-CLASS-IDENTIFIER: digium_D40_1_1_0_0_48178]
+    dhcpd: [1:0:f:d3:5:48:48] POOL VoIP
+    dhcpd: [1:0:f:d3:5:48:48] BOOT Digium D40
+    dhcpd: DHCPDISCOVER from 00:0f:d3:05:48:48 via eth0
+    dhcpd: DHCPOFFER on 10.42.1.100 to 00:0f:d3:05:48:48 via eth0
+    dhcpd: [1:0:f:d3:5:48:48] [VENDOR-CLASS-IDENTIFIER: digium_D40_1_1_0_0_48178]
+    dhcpd: [1:0:f:d3:5:48:48] POOL VoIP
+    dhcpd: [1:0:f:d3:5:48:48] BOOT Digium D40
+    dhcpd: DHCPREQUEST for 10.42.1.100 (10.42.1.1) from 00:0f:d3:05:48:48 via eth0
+    dhcpd: DHCPACK on 10.42.1.100 to 00:0f:d3:05:48:48 via eth0
+
+---
+section: Upload et MAJ de la config DHCP sur provd.xivo.fr
+
+xivo-skaro/provisioning/dhcpd-update
+
+    make upload
+
+Sur le xivo:
+    
+    dhcpcd-update -d
+
+---
+section: Creation du plugin
+
+xivo-skaro/provisioning/plugins
+
+    xivo-digium/
+        build.py
+        1.1.0.0/
+            plugin-info
+            entry.py
+            pkgs/
+                pkgs.db
+        common/
+            common.py
+            var/
+                tftpboot/
+                    Digium/
+
+---
+section: Creation du plugin
+
+### build.py ###
+
+    # -*- coding: UTF-8 -*-
+    
+    from subprocess import check_call
+    
+    
+    @target('1.1.0.0', 'xivo-digium-1.1.0.0')
+    def build_1_1_0_0(path):
+        check_call(['rsync', '-rlp', '--exclude', '.*',
+                    'common/', path])
+    
+        check_call(['rsync', '-rlp', '--exclude', '.*',
+                    '1.1.0.0/', path])
+
+---
+section: Creation du plugin
+
+### 1.1.0.0/plugin-info ###
+
+    {
+        "version": "0.3",
+        "description": "Plugin for Digium D40, D50 and D70 in version 1.1.0.0.",
+        "description_fr": "Greffon pour Digium D40, D50 et D70 en version 1.1.0.0.",
+        "capabilities": {
+            "Digium, D40, 1.1.0.0": {
+                "sip.lines": 2
+            },
+            "Digium, D50, 1.1.0.0": {
+                "sip.lines": 4
+            },
+            "Digium, D70, 1.1.0.0": {
+                "sip.lines": 6
+            }
+        }
+    }
+
+---
+section: Creation du plugin
+
+### 1.1.0.0/entry.py ###
+
+    # -*- coding: UTF-8 -*-
+    
+    common = {}
+    execfile_('common.py', common)
+    
+    
+    VERSION = u'1.1.0.0.48178'
+    
+    
+    class DigiumPlugin(common['BaseDigiumPlugin']):
+        IS_PLUGIN = True
+    
+        pg_associator = common['DigiumPgAssociator'](VERSION)
+
+---
+section: Recuperation Firmware
+
+### 1.1.0.0/pkgs/pkgs.db ###
+
+    [pkg_firmware]
+    description: Firmware for all Digium phones
+    description_fr: Micrologiciel pour tous les téléphones Digium
+    version: 1.1.0.0
+    files: firmware
+    install: digium-fw
+    
+    
+    [install_digium-fw]
+    a-b: untar $FILE1
+    b-c: cp */*.eff firmware/
+    
+    
+    [file_firmware]
+    url: http://downloads.digium.com/pub/telephony/res_digium_phone/firmware/firmware_1_1_0_0_package.tar.gz
+    size: 100111361
+    sha1sum: 1d44148b996eaf270fd35995f3c5d69ff0438c5b
+
+---
+section: Recuperation Info sur le telephone
+
+(Cliquez sur les liens pour voir les fichiers)
+
+[common.py: DigiumDHCPDeviceInfoExtractor](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/common/common.py;h=e2654217ba0d36aba77408e2f510734dae7451de;hb=HEAD#l36)
+
+[common.py: DigiumHTTPDeviceInfoExtractor](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/common/common.py;h=e2654217ba0d36aba77408e2f510734dae7451de;hb=HEAD#l64)
+
+Logs
+
+    provd[1090]: Processing HTTP request: /Digium/000fd3054848.cfg
+    provd[1090]: <11> Extracted device info: {u'ip': u'10.42.1.100', u'mac': u'00:0f:d3:05:48:48', u'vendor': u'Digium'}
+    provd[1090]: <11> Retrieved device id: 254374beec8d40209ff70393326b0b13
+    provd[1090]: <11> Routing request to plugin xivo-digium-1.1.0.0
+
+---
+section: Association telephone <-> plugin
+
+(Cliquez sur les liens pour voir les fichiers)
+
+[common.py: DigiumPgAssociator](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/common/common.py;h=e2654217ba0d36aba77408e2f510734dae7451de;hb=HEAD#l82)
+
+---
+section: Configuration telephone
+
+(Cliquez sur les liens pour voir les fichiers)
+
+[common.py: BaseDigiumPlugin](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/common/common.py;h=e2654217ba0d36aba77408e2f510734dae7451de;hb=HEAD#l100)
+
+---
+section: Templates telephone
+
+(Cliquez sur les liens pour voir les fichiers)
+
+[common/templates/base.tpl](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/common/templates/base.tpl;h=b5ba2df875b3c28d04fd44d39896abab33467806;hb=HEAD)
+
+[common/templates/contact.tpl](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/common/templates/contact.tpl;h=8178fd65e20823aca85bbd82cb115da83c788183;hb=HEAD)
+
+[1.1.0.0/templates/D40.tpl](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/1.1.0.0/templates/D40.tpl;h=0e0a0774edcaf3eac0a2ed3169feb14d236d250a;hb=HEAD)
+
+[1.1.0.0/templates/D50.tpl](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/1.1.0.0/templates/D50.tpl;h=d7881c898a7692cc9fbefcb585e1636730c9cac0;hb=HEAD)
+
+[1.1.0.0/templates/D70.tpl](http://git.xivo.fr/?p=official/xivo-skaro.git;a=blob;f=provisioning/plugins/xivo-digium/1.1.0.0/templates/D70.tpl;h=95ae4eac1a767322e5cef5ff68dce02ba1edad61;hb=HEAD)
+
+---
+section: Upload du plugin sur provd.xivo.fr
+
+Ne pas oublier de changer le mirror dans Configuration -> Provisioning -> General pour http://provd.xivo.fr/plugins/1/testing/
+
+En dev:
+
+    cd xivo-skaro/provisioning/plugins
+    make upload
+
+En prod:
+
+    cd xivo-skaro/provisioning/plugins
+    make download-stable
+    cd _build
+    cp dev/xivo-digium-1.1.0.0-0.3.tar.bz2 stable/
+    cd ..
+    make upload-stable
+
+---
+section: Fin
+
+Présentation sous license [Creative Commons BY](http://creativecommons.org/licenses/by/3.0)
+![Creative Commons BY](http://i.creativecommons.org/l/by/3.0/88x31.png)
+
+Slides et CSS générés avec remark
+(http://gnab.github.com/remark)
+
+</textarea>
+
+    <div id="slideshow"></div>
+  </body>
+</html>
